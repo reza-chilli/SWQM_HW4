@@ -52,17 +52,21 @@ for i = 2:timeStep:length(eulerConcentrations)
     % euler method
     eulerConcentrations(i) = eulerConcentrations(i - 1) + (((loads(i) * (10 ^ 9))/lakeVolume) - (eigenValue * eulerConcentrations(i - 1))) * timeStep;
     % RK4 method
-    k_1 = ((loads(i) * (10 ^ 9))/lakeVolume) + rk4Concentrations(i - 1);
-    k_2 = ((loads(floor(i + (0.5 * timeStep))) * (10 ^ 9))/lakeVolume) + rk4Concentrations(i - 1) + 0.5 * timeStep * k_1;
-    k_3 = ((loads(floor(i + (0.5 * timeStep))) * (10 ^ 9))/lakeVolume) + rk4Concentrations(i - 1) + 0.5 * timeStep * k_2;
-    k_4 = ((loads(floor(i + timeStep)) * (10 ^ 9))/lakeVolume) + rk4Concentrations(i - 1) + timeStep * k_3;
+    k_1 = ((loads(i) * (10 ^ 9))/lakeVolume) - (eigenValue * rk4Concentrations(i - 1));
+    k_2 = ((loads(floor(i + (0.5 * timeStep))) * (10 ^ 9))/lakeVolume) - (eigenValue * (rk4Concentrations(i - 1) + 0.5 * timeStep * k_1));
+    k_3 = ((loads(floor(i + (0.5 * timeStep))) * (10 ^ 9))/lakeVolume) - (eigenValue * (rk4Concentrations(i - 1) + 0.5 * timeStep * k_2));
+    k_4 = ((loads(floor(i + timeStep)) * (10 ^ 9))/lakeVolume) - (eigenValue * (rk4Concentrations(i - 1) + timeStep * k_3));
     rk4Concentrations(i) = rk4Concentrations(i - 1) + (timeStep * (k_1 + (2 * k_2) + (2 * k_3) + k_4))/6; 
 end
 
 x = 1930:1:1991;
 % initiating plot with labels
 figure;
-% plot(x, eulerConcentrations);
+plot(x, eulerConcentrations);
+hold on;
+
 plot(x, rk4Concentrations);
 xlabel('SOY');
 ylabel('Concentration (ppb)');
+legend('Euler Method', 'RK4 Method');
+hold off;
