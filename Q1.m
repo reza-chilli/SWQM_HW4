@@ -4,8 +4,10 @@ outputRiverDischarge = 1.25 * (10 ^ 9); % m^3/yr
 sedimentRate = 12; % m/yr
 initConcentration = 17.4; % ppb
 eigenValue = (outputRiverDischarge/lakeVolume) + (sedimentRate/lakeMeanDepth);  % 1/yr
-concentrations = zeros(1, 62); % from SOY 1930 through EOY 1990
-concentrations(1) = initConcentration;
+eulerConcentrations = zeros(1, 62); % from SOY 1930 through EOY 1990
+rk4Concentrations = zeros(1, 62); % from SOY 1930 through EOY 1990
+eulerConcentrations(1) = initConcentration;
+rk4Concentrations(1) = initConcentration;
 timeStep = 1; % year
 loads = zeros(1, 62); % metric tons per year
 
@@ -41,19 +43,26 @@ loads(49) = 60.3; % 1977
 loads(50) = 48.6; % 1978
 loads(51) = 60.5; % 1979
 
-for i = 52:62
+for i = 52:63
     loads(i) = 60.5; % 1980 through 1990
 end
 % end of assignment
 
-for i = 2:timeStep:length(concentrations)
+for i = 2:timeStep:length(eulerConcentrations)
     % euler method
-    concentrations(i) = concentrations(i - 1) + (((loads(i) * (10 ^ 9))/lakeVolume) - (eigenValue * concentrations(i - 1))) * timeStep;
+    eulerConcentrations(i) = eulerConcentrations(i - 1) + (((loads(i) * (10 ^ 9))/lakeVolume) - (eigenValue * eulerConcentrations(i - 1))) * timeStep;
+    % RK4 method
+    k_1 = ((loads(i) * (10 ^ 9))/lakeVolume) + rk4Concentrations(i - 1);
+    k_2 = ((loads(floor(i + (0.5 * timeStep))) * (10 ^ 9))/lakeVolume) + rk4Concentrations(i - 1) + 0.5 * timeStep * k_1;
+    k_3 = ((loads(floor(i + (0.5 * timeStep))) * (10 ^ 9))/lakeVolume) + rk4Concentrations(i - 1) + 0.5 * timeStep * k_2;
+    k_4 = ((loads(floor(i + timeStep)) * (10 ^ 9))/lakeVolume) + rk4Concentrations(i - 1) + timeStep * k_3;
+    rk4Concentrations(i) = rk4Concentrations(i - 1) + (timeStep * (k_1 + (2 * k_2) + (2 * k_3) + k_4))/6; 
 end
 
 x = 1930:1:1991;
 % initiating plot with labels
 figure;
-plot(x, concentrations);
-xlabel('EOY');
+% plot(x, eulerConcentrations);
+plot(x, rk4Concentrations);
+xlabel('SOY');
 ylabel('Concentration (ppb)');
